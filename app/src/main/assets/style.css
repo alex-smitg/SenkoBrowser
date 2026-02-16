@@ -1,0 +1,42 @@
+
+body {
+    background: #F4B13C;
+}
+
+h1 {
+    text-align: center;
+    color: #513F0C;
+}
+
+
+button {
+    border: 0;
+    outline: solid 2px;
+}
+
+input {
+    font-size: 15px;
+    height: 36px;
+    line-height: 36px;
+    margin-right: 12px;
+    outline: solid 2px;
+    text-shadow: 1px 1px 0 white;
+    width: 100%;
+
+}
+
+div {
+    display: flex;
+}
+
+.center_images_container {
+    justify-content: center;
+}
+
+.bigsenko {
+    width: 20%;
+    outline: solid 3px;
+    padding: 0px;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}

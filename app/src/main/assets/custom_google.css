@@ -1,0 +1,25 @@
+body{
+background: #F4B13C;
+    background-image: url("bg.jpg");
+    background-size: cover;
+background-repeat: no-repeat;
+background-position: right -500px center;
+background-blend-mode: darken;
+}
+
+
+.v6U7rf {
+}
+
+p{
+color: orange !important;
+}
+
+a {
+color: #ff6000 !important;
+}
+
+:root {
+--JKqx2 : orange !important;
+--xhUGwc: #552d00 !important;
+}
