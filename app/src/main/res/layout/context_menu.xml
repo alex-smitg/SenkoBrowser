@@ -22,8 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="srcuri"
-            android:textIsSelectable="true"
-            android:visibility="gone" />
+            android:textIsSelectable="true" />
 
         <TextView
             android:id="@+id/textLinkUri"

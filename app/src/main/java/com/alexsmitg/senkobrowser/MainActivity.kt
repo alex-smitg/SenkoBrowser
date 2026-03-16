@@ -3,12 +3,16 @@ package com.alexsmitg.senkobrowser
 import android.app.Activity
 import android.app.ComponentCaller
 import android.app.DownloadManager
+import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -17,15 +21,19 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.viewpager.widget.ViewPager
+import com.google.android.material.internal.WindowUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.mozilla.geckoview.AllowOrDeny
@@ -39,8 +47,12 @@ import org.mozilla.geckoview.WebRequestError
 import org.mozilla.geckoview.WebResponse
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 private var geckoRuntime: GeckoRuntime? = null
+
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var geckoView: GeckoView
@@ -49,9 +61,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pageTitleText: TextView
 
     private var currentUrl: String = ""
-    private var canGoBack: Boolean = false
 
     private var geckoSession: GeckoSession? = null
+
+    private var fullScreen: Boolean = false
+    private var desktopMode: Boolean = false
+    private var canGoBack: Boolean = false
+
 
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
     private var pendingFilePrompt: GeckoSession.PromptDelegate.FilePrompt? = null
@@ -228,6 +244,87 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getFilename(response: WebResponse): String {
+        var filename: String
+        var contentDispositionHeader: String
+        if (response.headers.containsKey("content-disposition")) {
+            contentDispositionHeader = response.headers["content-disposition"] ?: " "
+        } else {
+            contentDispositionHeader = response.headers.getOrDefault("Content-Disposition", "default filename=SenkoDownload")
+        }
+        val pattern: Pattern = Pattern.compile("(filename=\"?)(.+)(\"?)")
+        val matcher: Matcher = pattern.matcher(contentDispositionHeader)
+
+        if (matcher.find()) {
+            filename = matcher.group(2).replace("\\s", "%20").replace("\"", "")
+        } else {
+            filename = "SenkoDownload"
+        }
+
+        return filename
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun downloadFile(response: WebResponse) {
+        val filename = getFilename(response)
+        Toast.makeText(applicationContext, "d $filename", Toast.LENGTH_SHORT).show()
+
+        var mime: String? = response.headers["Content-Type"]
+        if (mime != null) {
+            if (";" in mime) {
+                mime = mime.split(";")[0].trim()
+            } else {
+                mime = mime.trim()
+            }
+        }
+        if (mime == null || mime.isEmpty()) {
+            mime = "*/*"
+        }
+
+        val contentValues: ContentValues = ContentValues()
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mime)
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+        contentValues.put(MediaStore.MediaColumns.IS_PENDING, 1)
+
+        val collection: Uri = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        val fileUri: Uri? = contentResolver.insert(collection, contentValues)
+        if (fileUri == null) {
+            Toast.makeText(applicationContext, "Unable to access directory", Toast.LENGTH_SHORT).show()
+        }
+        Toast.makeText(applicationContext, "Downloading $filename", Toast.LENGTH_SHORT).show()
+
+        val bufferSize = 1024
+        val buffer = ByteArray(bufferSize)
+
+
+        if (fileUri != null) {
+            try {
+                val out = contentResolver.openOutputStream(fileUri)
+                var len = 0
+                while (true) {
+                    len = response.body?.read(buffer) ?: -1
+                    if (len == -1) {
+                        break
+                    }
+                    out?.write(buffer, 0, len)
+
+                }
+
+            } catch (e: Exception) {
+                Log.d("fox", ":(")
+            }
+        }
+        contentValues.clear()
+        contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+        if (fileUri != null) {
+            contentResolver.update(fileUri, contentValues, null, null)
+        }
+
+    }
+
+
     private fun createContentDelegate(): GeckoSession.ContentDelegate {
         return object : GeckoSession.ContentDelegate {
             override fun onContextMenu(
@@ -252,7 +349,11 @@ class MainActivity : AppCompatActivity() {
                             + element.altText
                             + " srcUri="
                             + element.srcUri
+                            + " baseUri="
+                            + element.baseUri
                 );
+
+
 
                 val view = layoutInflater.inflate(R.layout.context_menu, null)
 
@@ -266,7 +367,7 @@ class MainActivity : AppCompatActivity() {
                 view.findViewById<TextView>(R.id.textLinkUri).text = element.linkUri;
 
                 view.findViewById<Button>(R.id.button).setOnClickListener {
-                    element.linkUri?.let { it1 -> go(it1) }
+                    go(element.baseUri ?: "")
                 }
 
                 AlertDialog.Builder(this@MainActivity).setView(view).create().show()
@@ -282,34 +383,20 @@ class MainActivity : AppCompatActivity() {
 
             }
 
+            override fun onFullScreen(geckoSession: GeckoSession, fs : Boolean) {
+                fullScreen = fs
+                if (fullScreen) {
+                    supportActionBar?.hide()
+                } else {
+                    supportActionBar?.show()
+                }
+
+                super.onFullScreen(geckoSession, fs)
+            }
+
+            @RequiresApi(Build.VERSION_CODES.Q) //TODO: surround with api check
             override fun onExternalResponse(p0: GeckoSession, response: WebResponse) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val connection = URL(response.uri).openConnection() as HttpURLConnection
-                    connection.requestMethod = "HEAD"
-                    connection.connectTimeout = 5000
-                    connection.readTimeout = 5000
-                    val mime = connection.contentType
-                    connection.disconnect()
-                    if (mime.startsWith("application/") || mime.startsWith("image/")
-                        || mime.startsWith("video/") || mime.startsWith("audio/")) {
-                        val uri = Uri.parse(response.uri)
-                        val request = DownloadManager.Request(uri)
-                            .setTitle(uri.lastPathSegment)
-                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                            .setDestinationInExternalPublicDir(
-                                Environment.DIRECTORY_DOWNLOADS,
-                                uri.lastPathSegment
-                            )
-
-                        val downloadManager =
-                            applicationContext.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                        downloadManager.enqueue(request)
-
-                    }
-
-
-                    }
-
+                downloadFile(response)
                 super.onExternalResponse(p0, response)
             }
 
