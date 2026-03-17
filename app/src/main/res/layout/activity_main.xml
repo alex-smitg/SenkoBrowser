@@ -44,6 +44,7 @@
         </org.mozilla.geckoview.GeckoView>
 
         <LinearLayout
+            android:id="@+id/bottomMenu"
             android:layout_width="match_parent"
             android:layout_height="80dp"
             android:layout_weight="0"

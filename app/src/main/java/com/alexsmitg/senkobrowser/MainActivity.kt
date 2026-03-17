@@ -15,10 +15,12 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.view.WindowInsetsController
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -30,7 +32,9 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.internal.WindowUtils
@@ -59,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var editText: EditText
     private lateinit var progressView: ProgressBar
     private lateinit var pageTitleText: TextView
+    private lateinit var bottomMenu: LinearLayout
 
     private var currentUrl: String = ""
 
@@ -88,12 +93,31 @@ class MainActivity : AppCompatActivity() {
         geckoView = findViewById(R.id.geckoview)
         progressView = findViewById(R.id.pageProgress)
         pageTitleText = findViewById(R.id.pageTitleText)
+        bottomMenu = findViewById(R.id.bottomMenu)
         val homeImage: ImageView = findViewById(R.id.homeButton)
         homeImage.setOnClickListener { view ->
             go("resource://android/assets/index.html")
         }
 
         setupEditText()
+
+
+        val wic = WindowCompat.getInsetsController(window, window.decorView)
+        wic.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+
+        //is not working
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) {view, windowInsets ->
+            Log.d("fox", "///")
+            Toast.makeText(applicationContext, "immers", Toast.LENGTH_SHORT).show()
+            if (windowInsets.isVisible(WindowInsetsCompat.Type.statusBars()) ||
+                windowInsets.isVisible(WindowInsetsCompat.Type.navigationBars())) {
+
+            }
+
+            ViewCompat.onApplyWindowInsets(view, windowInsets)
+        }
 
 
         filePickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -385,10 +409,20 @@ class MainActivity : AppCompatActivity() {
 
             override fun onFullScreen(geckoSession: GeckoSession, fs : Boolean) {
                 fullScreen = fs
+
+                val wic = WindowCompat.getInsetsController(window, window.decorView)
                 if (fullScreen) {
+                    progressView.visibility = View.GONE
+                    editText.visibility = View.GONE
+                    bottomMenu.visibility = View.GONE
                     supportActionBar?.hide()
+                    wic.hide(WindowInsetsCompat.Type.systemBars())
+
                 } else {
+                    editText.visibility = View.VISIBLE
+                    bottomMenu.visibility = View.VISIBLE
                     supportActionBar?.show()
+                    wic.show(WindowInsetsCompat.Type.systemBars())
                 }
 
                 super.onFullScreen(geckoSession, fs)
@@ -423,6 +457,7 @@ class MainActivity : AppCompatActivity() {
                 if (progress in 1..99) {
                     progressView.visibility = View.VISIBLE
                 } else {
+                    progressView.visibility = View.GONE
                     progressView.progress = 0
                 }
                 super.onProgressChange(session, progress)
