@@ -184,7 +184,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        go("resource://android/assets/index.html")
+
+
+
+
+
+        val action: String? = intent?.action
+        val data: Uri? = intent?.data
+        if (action.equals("android.intent.action.VIEW")) {
+            go(data.toString())
+        } else {
+            go("resource://android/assets/index.html")
+        }
+
+        Log.d("fox", action ?: "...")
+        Log.d("fox", data.toString())
+
+
         window.statusBarColor = Color.parseColor("#FFC107")
 
 
@@ -263,7 +279,7 @@ class MainActivity : AppCompatActivity() {
                 p2: WebRequestError
             ): GeckoResult<String>? {
                 p1?.let { Log.d("fox", it) }
-                return GeckoResult.fromValue("data:text/html," + "<p>Error TwT</p>")
+                return GeckoResult.fromValue("data:text/html," + "<p>Error TwT</p>" + "<p>$p1</p>")
             }
         }
     }
