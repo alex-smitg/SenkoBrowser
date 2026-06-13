@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
     private var pendingFilePrompt: GeckoSession.PromptDelegate.FilePrompt? = null
 
-    private var blocked_websites: Array<String> = emptyArray()
+    private var blocked_websites: MutableList<String> = mutableListOf<String>()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,6 +89,18 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        val fileName = "BLOCK_LIST"
+        val str = application.assets.open(fileName).bufferedReader().use{
+            it.readText()
+        }
+
+        blocked_websites = mutableListOf<String>()
+        str.split("\n").forEach {
+            blocked_websites.add(it)
+        }
+        Log.i("fox", blocked_websites.toString())
+
 
         geckoView = findViewById(R.id.geckoview)
         progressView = findViewById(R.id.pageProgress)
@@ -177,6 +189,39 @@ class MainActivity : AppCompatActivity() {
                         return super.onFilePrompt(p0, prompt)
                     }
 
+
+
+                    override fun onChoicePrompt(
+                        p0: GeckoSession,
+                        choicePrompt: GeckoSession.PromptDelegate.ChoicePrompt
+                    ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse?>? {
+
+                        val builder = AlertDialog.Builder(this@MainActivity)
+                        builder.setTitle(choicePrompt.message)
+
+                        val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse?>()
+
+                        val array: Array<CharSequence> = Array<CharSequence>(choicePrompt.choices.size, {i -> ""})
+
+
+                        choicePrompt.choices.forEachIndexed { i: Int, c: GeckoSession.PromptDelegate.ChoicePrompt.Choice ->
+                            array[i] = c.label
+                            Log.d("fox", c.label)
+                        }
+                        builder.setItems(array) { dialog, which ->
+                            Log.d("fox", which.toString())
+                            result.complete(choicePrompt.confirm(choicePrompt.choices[which]))
+                        }
+                        builder.setOnCancelListener {
+                            result.complete(choicePrompt.dismiss())
+                        }
+
+                        builder.create().show()
+
+                        return result
+
+                    }
+
                 }
 
 
@@ -239,7 +284,7 @@ class MainActivity : AppCompatActivity() {
                     for (a: String in blocked_websites) {
 
                         if (a.lowercase() in url.lowercase()) {
-                            go("about:blank")
+                            go("resource://android/assets/index.html")
                         }
                     }
                 };

@@ -8,23 +8,38 @@
     tools:context=".MainActivity">
 
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/editText"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="42sp"
-            android:background="#FFC107"
-            android:backgroundTintMode="src_over"
-            android:imeOptions="actionGo"
-            android:importantForAutofill="no"
-            android:inputType="text|textUri"
-            android:selectAllOnFocus="true"
-            android:singleLine="true">
+            android:layout_height="42dp">
 
-        </EditText>
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:tint="#B5140F00"
+                app:srcCompat="@drawable/senko" />
+
+            <EditText
+                android:id="@+id/editText"
+                android:layout_width="match_parent"
+                android:layout_height="42sp"
+                android:backgroundTintMode="src_over"
+                android:imeOptions="actionGo"
+                android:importantForAutofill="no"
+                android:inputType="text|textUri"
+                android:selectAllOnFocus="true"
+                android:singleLine="true"
+                android:text="senko"
+                android:textColor="@color/senko">
+
+            </EditText>
+        </FrameLayout>
 
         <ProgressBar
             android:id="@+id/pageProgress"
@@ -43,39 +58,53 @@
 
         </org.mozilla.geckoview.GeckoView>
 
-        <LinearLayout
-            android:id="@+id/bottomMenu"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:layout_weight="0"
-            android:background="@color/senko"
-            android:orientation="horizontal">
+            android:layout_height="80dp">
 
             <ImageView
-                android:id="@+id/homeButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="3"
-                android:paddingTop="10px"
-                android:paddingBottom="0px"
-                android:rotation="0"
-                android:rotationX="0"
-                android:rotationY="-180"
-                android:scaleX="1.3"
-                android:scaleY="1.3"
-                android:translationX="-50px"
-                app:srcCompat="@drawable/senkoo" />
-
-            <TextView
-                android:id="@+id/pageTitleText"
+                android:id="@+id/imageView3"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center|left"
-                android:text="Title"
-                android:textColor="#000000"
-                android:textSize="18sp" />
-        </LinearLayout>
+                android:scaleType="centerCrop"
+                android:tint="#B5140F00"
+                app:srcCompat="@drawable/senkosoup" />
+
+            <LinearLayout
+                android:id="@+id/bottomMenu"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_weight="0"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/homeButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="3"
+                    android:paddingTop="10px"
+                    android:paddingBottom="0px"
+                    android:rotation="0"
+                    android:rotationX="0"
+                    android:rotationY="-180"
+                    android:scaleX="1.3"
+                    android:scaleY="1.3"
+                    android:translationX="-50px"
+                    app:srcCompat="@drawable/senkoo" />
+
+                <TextView
+                    android:id="@+id/pageTitleText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center|left"
+                    android:text="Title"
+                    android:textColor="@color/senko"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+        </FrameLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
