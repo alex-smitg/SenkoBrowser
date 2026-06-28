@@ -19,6 +19,7 @@ import android.view.WindowInsetsController
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -31,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -64,6 +66,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressView: ProgressBar
     private lateinit var pageTitleText: TextView
     private lateinit var bottomMenu: LinearLayout
+    private lateinit var hideBarsButton: AppCompatButton
+    private lateinit var topFrame: FrameLayout
+    private lateinit var bottomMenuFrame: FrameLayout
 
     private var currentUrl: String = ""
 
@@ -95,6 +100,8 @@ class MainActivity : AppCompatActivity() {
             it.readText()
         }
 
+
+
         blocked_websites = mutableListOf<String>()
         str.split("\n").forEach {
             blocked_websites.add(it)
@@ -106,12 +113,21 @@ class MainActivity : AppCompatActivity() {
         progressView = findViewById(R.id.pageProgress)
         pageTitleText = findViewById(R.id.pageTitleText)
         bottomMenu = findViewById(R.id.bottomMenu)
+        hideBarsButton = findViewById(R.id.hideBarsButton)
+        topFrame = findViewById(R.id.topFrame)
+        bottomMenuFrame = findViewById(R.id.bottomMenuFrame)
         val homeImage: ImageView = findViewById(R.id.homeButton)
         homeImage.setOnClickListener { view ->
             go("resource://android/assets/index.html")
         }
 
         setupEditText()
+
+        hideBarsButton.setOnClickListener { view ->
+            progressView.visibility = View.GONE
+            editText.visibility = View.GONE
+            bottomMenu.visibility = View.GONE
+        }
 
 
         val wic = WindowCompat.getInsetsController(window, window.decorView)
@@ -476,12 +492,16 @@ class MainActivity : AppCompatActivity() {
                     progressView.visibility = View.GONE
                     editText.visibility = View.GONE
                     bottomMenu.visibility = View.GONE
+                    bottomMenuFrame.visibility = View.GONE
+                    topFrame.visibility = View.GONE
                     supportActionBar?.hide()
                     wic.hide(WindowInsetsCompat.Type.systemBars())
 
                 } else {
                     editText.visibility = View.VISIBLE
                     bottomMenu.visibility = View.VISIBLE
+                    bottomMenuFrame.visibility = View.VISIBLE
+                    topFrame.visibility = View.VISIBLE
                     supportActionBar?.show()
                     wic.show(WindowInsetsCompat.Type.systemBars())
                 }
