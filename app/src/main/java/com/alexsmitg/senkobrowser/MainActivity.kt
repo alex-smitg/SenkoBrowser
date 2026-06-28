@@ -49,8 +49,11 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.WebExtension
+import org.mozilla.geckoview.WebExtensionController
 import org.mozilla.geckoview.WebRequestError
 import org.mozilla.geckoview.WebResponse
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.regex.Matcher
@@ -180,6 +183,46 @@ class MainActivity : AppCompatActivity() {
         if (geckoRuntime == null) {
             geckoRuntime = GeckoRuntime.create(this)
         }
+
+
+        val file = File(application.filesDir, "ublock.xpi")
+
+        application.assets.open("extensions/ublock.xpi").use { input ->
+            file.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+
+
+        val res: GeckoResult<org.mozilla.geckoview.WebExtension>? = geckoRuntime?.webExtensionController?.install(file.toURI().toString())
+
+
+        geckoRuntime?.webExtensionController?.promptDelegate = object : WebExtensionController.PromptDelegate {
+            override fun onInstallPromptRequest(
+                p0: WebExtension,
+                p1: Array<out String?>,
+                p2: Array<out String?>,
+                p3: Array<out String?>
+            ): GeckoResult<WebExtension.PermissionPromptResponse?>? {
+                val result = GeckoResult<WebExtension.PermissionPromptResponse?>()
+
+                result.complete(WebExtension.PermissionPromptResponse(true, true, false))
+                return result
+            }
+        }
+
+        geckoRuntime?.webExtensionController?.list()?.then( { it ->
+            Log.d("fox",  it.toString())
+            GeckoResult.fromValue(null)
+        },
+        { ex ->
+            GeckoResult.fromValue(null)
+        })
+
+
+
+
 
         if (geckoSession == null) {
             geckoSession = GeckoSession()
