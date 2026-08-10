@@ -185,17 +185,9 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val file = File(application.filesDir, "ublock.xpi")
-
-        application.assets.open("extensions/ublock.xpi").use { input ->
-            file.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
 
 
-
-        val res: GeckoResult<org.mozilla.geckoview.WebExtension>? = geckoRuntime?.webExtensionController?.install(file.toURI().toString())
+        //val res: GeckoResult<org.mozilla.geckoview.WebExtension>? = geckoRuntime?.webExtensionController?.install("resource://android/assets/extensions/ublock.xpi")
 
 
         geckoRuntime?.webExtensionController?.promptDelegate = object : WebExtensionController.PromptDelegate {
