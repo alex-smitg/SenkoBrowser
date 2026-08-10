@@ -192,20 +192,36 @@ class MainActivity : AppCompatActivity() {
 
         geckoRuntime?.webExtensionController?.promptDelegate = object : WebExtensionController.PromptDelegate {
             override fun onInstallPromptRequest(
-                p0: WebExtension,
+                extension: WebExtension,
                 p1: Array<out String?>,
                 p2: Array<out String?>,
                 p3: Array<out String?>
             ): GeckoResult<WebExtension.PermissionPromptResponse?>? {
                 val result = GeckoResult<WebExtension.PermissionPromptResponse?>()
 
-                result.complete(WebExtension.PermissionPromptResponse(true, true, false))
+                val builder: AlertDialog.Builder = AlertDialog.Builder(this@MainActivity)
+                builder
+                    .setTitle("Add extension?")
+                    .setMessage("Add ${extension.metaData.name} by ${extension.metaData.creatorName}" +
+                            "\n" +
+                            extension.metaData.description
+                    )
+                    .setPositiveButton("Add") { dialog, which ->
+                        result.complete(WebExtension.PermissionPromptResponse(true, true, false))
+                    }
+
+                    .setNegativeButton("Cancel") { dialog, which ->
+                        result.cancel()
+                    }
+                builder.create().show()
                 return result
             }
         }
 
         geckoRuntime?.webExtensionController?.list()?.then( { it ->
-            Log.d("fox",  it.toString())
+            it?.forEach { extension: WebExtension ->
+               Log.d("fox", extension.metaData.name ?: "No name")
+            }
             GeckoResult.fromValue(null)
         },
         { ex ->
